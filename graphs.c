@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdbool.h>
 
 void process_vertex_early (Graph g, int v)
 {
@@ -48,33 +49,122 @@ void bfs (Graph g, int v)
 	}
 }
 
-void insert_edge (Edge *list, int x, int y)
+int rest (int a, int b)
 {
-	Edge *temp = list;
-	Edge new_edge;
-	new_edge.x = x;
-	new_edge.y = y;
-	new_edge.next = temp;
-	list = &new_edge;
+	return (int) (a - b * (int) (a / b));
 }
 
-void create_random_graph (int max_edges)
+void insert_edge (Edge** list, int x, int y)
+{
+	Edge *new_edge;
+	new_edge = (Edge *) malloc(sizeof(Edge));
+	
+	new_edge->x = x;
+	new_edge->y = y;	
+
+	new_edge->next = *list;
+	*list = new_edge;
+}
+
+/**
+ * Determines if an edge between node x and node y already exists
+ * @param  list the list of edges of node x
+ * @param  y    the target node
+ * @return      true if an edge exists, false otherwise
+ */
+bool already_linked (Edge *list, int y)
+{
+	if (list == NULL)
+	{
+		return false;
+	}
+	else if (list->y == y)
+	{
+		return true;
+	}
+	else
+	{
+		return already_linked (list->next, y);
+	}
+}
+
+/**
+ * Prints all the out edges from a vertex
+ * @param g    the graph
+ * @param list the list of outgoing edges
+ */
+void print_edges (Graph g, Edge* list)
+{
+	if (list == NULL)
+	{
+		return;
+	}
+
+	printf("\t %d -> %d", list->x, list->y);
+	print_edges(g, list->next);
+}
+
+/**
+ * Maximum of two integers
+ * @param  a first integer
+ * @param  b second integer
+ * @return   max of a and b
+ */
+int max (int a, int b)
+{
+	return (a < b) ? b : a;
+}
+
+/**
+ * Creates a random undirected graph by linking vertices at random, with a given maximum
+ * number of edges per node. Avoids i->i edges.
+ * @param max_edges the maximum number of edges per node
+ */
+Graph create_random_graph (int max_edges)
 {
 	Graph g;
 	unsigned int iseed = (unsigned int)time(NULL);
 	srand(iseed);
+	int num_edges;
+	int y;
+	
+	for (int k = 1; k < MAXV + 1; ++k)
+	{
+		Vertex v;
+		v.v = k;
+		v.num_edges = 0;
+		
+		v.edges = NULL;
+		g.vertices[k] = v;
+	}
+
 	for (int i = 1; i < MAXV + 1; ++i)
 	{
-		g.vertices[i].num_edges = (int) (rand() - max_edges * (rand() / max_edges));
-		for (int j = 0; j < g.vertices[j].num_edges; ++j)
+		printf("\nNode %d:\t", i);
+		num_edges = max(1, rest(rand(), max_edges));
+		while (g.vertices[i].num_edges < num_edges)
 		{
+			do
+			{
+				y = 1 + rest(rand(), MAXV);
+			}
+			while (already_linked(g.vertices[i].edges, y) || y == i);
 			
+			insert_edge(&g.vertices[i].edges, i, y);
+			g.vertices[i].num_edges++;
+			
+			insert_edge(&g.vertices[y].edges, y, i);
+			g.vertices[y].num_edges++;
 		}
+		printf("num edges: %d\t", g.vertices[i].num_edges);
+		print_edges(g, g.vertices[i].edges);	
 	}
+
+	return g;
 }
 
 int main(int argc, char const *argv[])
 {
-	printf("Main\n");
+	Graph g = create_random_graph(5);
 	return 0;
 }
