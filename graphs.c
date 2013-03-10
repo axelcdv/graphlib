@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdbool.h>
+#include "stack.h"
 
 /**
  * Template function to process a vertex upon first entry
